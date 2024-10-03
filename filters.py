@@ -55,10 +55,17 @@ class ResizeFilter(Filter):
 @dataclass
 class ShowFilter(Filter):
     window_name: str = 'Processed Video'
+    pinned: bool = True
+
+    def __post_init__(self):
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
     def apply(self, frame):
         cv2.imshow(self.window_name, frame)
+        if self.pinned:
+            cv2.setWindowProperty(self.window_name, cv2.WND_PROP_TOPMOST, 1)
         return frame
+
     
 
 class EdgeDetectionFilter(Filter):
