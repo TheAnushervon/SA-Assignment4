@@ -9,7 +9,8 @@ from abc import abstractmethod, ABC
 @dataclass
 class Filter(ABC):
     outputs: list[Queue | callable] = field(
-        default_factory=list, kw_only=True, repr=False)
+        default_factory=list, kw_only=True, repr=False
+    )
     first: Filter = field(init=False, repr=False)
 
     def __post_init__(self):
@@ -64,8 +65,7 @@ class ResizeFilter(Filter):
 
 @dataclass
 class ShowFilter(Filter):
-    window_name: Literal['Processed Video',
-                         'Input Video'] | str = 'Processed Video'
+    window_name: Literal["Processed Video", "Input Video"] | str = "Processed Video"
     pinned: bool = True
 
     def apply(self, frame):
