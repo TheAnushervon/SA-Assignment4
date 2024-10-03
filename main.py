@@ -1,32 +1,41 @@
+from queue import Queue
 import cv2
-from filters.black_and_white import apply_black_and_white
-from filters.mirror import apply_mirror
-from filters.resize import apply_resize
-from filters.blur import apply_blur
+from filters import BnWFilter, BlurFilter, MirrorFilter, ResizeFilter, ShowFilter, EdgeDetectionFilter
 
-def main():
-    cap = cv2.VideoCapture(0)  # 0 for webcam, or provide a video file path
+sink_pipe = Queue()
 
+show_filter = ShowFilter(outputs=[])
+blur_filter = BlurFilter(kernel_size=15, outputs=[show_filter.input, sink_pipe])
+# bnw_filter = BnWFilter(outputs=[show_filter.input])
+mirror_filter = MirrorFilter(outputs=[blur_filter.input])
+resize_filter = ResizeFilter(scale_factor=0.5,outputs=[mirror_filter.input])
+edge_filter = EdgeDetectionFilter(outputs=[resize_filter.input])
+
+input_show_filter = ShowFilter(
+    window_name='Input video',
+    outputs=[edge_filter.input]
+)
+
+
+
+source_pipe = input_show_filter.input
+
+cap = cv2.VideoCapture(0) 
+
+try:
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-
-        # Apply filters
-        resized_frame = apply_resize(frame)
-        mirrored_frame = apply_mirror(resized_frame)
-        black_and_white_frame = apply_black_and_white(mirrored_frame)
-        blurred_frame = apply_blur(black_and_white_frame)
-
-        # Display the resulting frame
-        cv2.imshow('Processed Video', blurred_frame)
-
+        
+        source_pipe(frame)
+        
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+except KeyboardInterrupt:
+    print('KeyboardInterrupt')
 
-    # Release resources
-    cap.release()
-    cv2.destroyAllWindows()
+cap.release()
+cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    main()
+
