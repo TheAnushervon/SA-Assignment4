@@ -1,16 +1,21 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from queue import Queue
+from typing import Literal
 import cv2
 from abc import abstractmethod, ABC
 
 @dataclass
 class Filter(ABC):
-    outputs: list[Queue | callable] = field(default_factory=list, kw_only=True)
+    outputs: list[Queue | callable] = field(default_factory=list, kw_only=True, repr=False)
+    first: Filter = field(init=False, repr=False)
 
+    def __post_init__(self):
+        self.first = self
+        
     def pipe(self, filter: Filter, /):
         self.outputs.append(filter.input)
-
+        filter.first = self.first
         return filter
 
     @abstractmethod
@@ -49,16 +54,13 @@ class ResizeFilter(Filter):
     def apply(self, frame):
         width = int(frame.shape[1] * self.scale_factor)
         height = int(frame.shape[0] * self.scale_factor)
-        return cv2.resize(frame, (width, height))
-
+        resized_frame = cv2.resize(frame, (width, height))
+        return resized_frame
 
 @dataclass
 class ShowFilter(Filter):
-    window_name: str = 'Processed Video'
+    window_name: Literal['Processed Video', 'Input Video'] |str = 'Processed Video'
     pinned: bool = True
-
-    def __post_init__(self):
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
     def apply(self, frame):
         cv2.imshow(self.window_name, frame)
