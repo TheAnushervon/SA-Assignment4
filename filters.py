@@ -5,14 +5,16 @@ from typing import Literal
 import cv2
 from abc import abstractmethod, ABC
 
+
 @dataclass
 class Filter(ABC):
-    outputs: list[Queue | callable] = field(default_factory=list, kw_only=True, repr=False)
+    outputs: list[Queue | callable] = field(
+        default_factory=list, kw_only=True, repr=False)
     first: Filter = field(init=False, repr=False)
 
     def __post_init__(self):
         self.first = self
-        
+
     def pipe(self, filter: Filter, /):
         self.outputs.append(filter.input)
         filter.first = self.first
@@ -35,6 +37,7 @@ class BnWFilter(Filter):
     def apply(self, frame):
         return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+
 @dataclass
 class BlurFilter(Filter):
     kernel_size: int = 5
@@ -46,7 +49,8 @@ class BlurFilter(Filter):
 class MirrorFilter(Filter):
     def apply(self, frame):
         return cv2.flip(frame, 1)
-    
+
+
 @dataclass
 class ResizeFilter(Filter):
     scale_factor: float = 0.5
@@ -57,9 +61,11 @@ class ResizeFilter(Filter):
         resized_frame = cv2.resize(frame, (width, height))
         return resized_frame
 
+
 @dataclass
 class ShowFilter(Filter):
-    window_name: Literal['Processed Video', 'Input Video'] |str = 'Processed Video'
+    window_name: Literal['Processed Video',
+                         'Input Video'] | str = 'Processed Video'
     pinned: bool = True
 
     def apply(self, frame):
@@ -68,7 +74,6 @@ class ShowFilter(Filter):
             cv2.setWindowProperty(self.window_name, cv2.WND_PROP_TOPMOST, 1)
         return frame
 
-    
 
 class EdgeDetectionFilter(Filter):
     def apply(self, frame):
