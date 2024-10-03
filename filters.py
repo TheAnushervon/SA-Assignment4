@@ -46,7 +46,7 @@ class MirrorFilter(Filter):
 class ResizeFilter(Filter):
     scale_factor: float = 0.5
 
-    def apply(self, frame, ):
+    def apply(self, frame):
         width = int(frame.shape[1] * self.scale_factor)
         height = int(frame.shape[0] * self.scale_factor)
         return cv2.resize(frame, (width, height))
