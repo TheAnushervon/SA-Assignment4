@@ -7,6 +7,23 @@ from filters import BnWFilter, BlurFilter, MirrorFilter, ResizeFilter, ShowFilte
 sink_pipe = Queue()
 
 
+def video_processing_loop(source_pipe):
+    cap = cv2.VideoCapture(0) 
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            source_pipe(frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt')
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+
 def top_down_approach():
     show_filter = ShowFilter(outputs=[sink_pipe.put])
     bnw_filter = BnWFilter(outputs=[show_filter.input])
@@ -27,23 +44,6 @@ def pipe_approach():
     pipe = ShowFilter('Input Video').pipe(EdgeDetectionFilter()).pipe(ResizeFilter(0.5)).pipe(ShowFilter(outputs=[sink_pipe.put]))
 
     video_processing_loop(pipe.first.input)
-
-def video_processing_loop(source_pipe):
-    cap = cv2.VideoCapture(0) 
-    try:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            source_pipe(frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    except KeyboardInterrupt:
-        print('KeyboardInterrupt')
-    finally:
-        cap.release()
-        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     top_down_approach()
